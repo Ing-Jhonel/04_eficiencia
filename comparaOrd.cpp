@@ -7,26 +7,37 @@ void ordenarBidireccional(int a[], int);
 int busquedaSecuOrd(int a[], int, int);
 int busquedaBinaria(int a[], int, int);
 
+
+struct Tiempo{
+	double busquedaSecuOrd, busquedaBinaria;
+};
+
+double tiempoPromedioMetodoBusqueda(Tiempo a[], int, bool);
+
+void crearArregloAleatorio(int a[], int);
+void imprimirArreglo(int a[], int);
+
 int main(){
 	
     srand(time(0));
-    int tamanio, busquedas, valor;
+    int tamanio, busquedas;
     char aleatorio;
     cout << "Indique la cantidad de elementos de su arreglo: ";
     cin >> tamanio;
     cout << "Indique cuantas busquedas quiere hacer: ";
     cin >> busquedas;
-    
-    bool seguir=true;
+    Tiempo tiempo[busquedas];
+    int valor[busquedas], valor1;
+    bool seguir=true, valorPorBusqueda=true;
     do{
-    	cout << "Buscar elemento aleatorio?(s/n): ";
+    	cout << "Buscar elemento aleatorio por busqueda?(s/n): ";
 	    cin >> aleatorio;
 	    
-	    if(aleatorio=='s'){
-	    	valor=rand() % 100;
-		} else if(aleatorio=='n'){
-			cout << "Indique el elemento a buscar: ";
-			cin >> valor;
+		if(aleatorio== 'n'){
+			valor1=rand() % 100;
+			valorPorBusqueda=false; //no crear valor de busqueda aleatorio por busqueda
+		} else if(aleatorio== 's'){
+			seguir=true;
 		} else {
 			seguir=false;
 		}
@@ -34,57 +45,128 @@ int main(){
 	cout << endl;
     int arr[tamanio];
     
+    /*
     for(int i=0; i<tamanio; i++){
         arr[i] = rand() % 100;
         //cout << arr[i] << " ";	
     }
+    */
     //cout << endl << endl << "Arreglo ordenado:" << endl << endl;
-    ordenarBidireccional(arr, tamanio);
     /*
 	for(int i=0; i<tamanio; i++){
         cout << arr[i] << " ";	
     } 
     cout << endl;
 	*/
-	
 	system("cls");
-    int opcion;
-	double tiempoBusquedaSecuOrd[busquedas], tiempobusquedaBinaria[busquedas];
-    cout << "Elija el tipo de busqueda: " << endl << endl;
-    cout << "1) Busqueda secuencial en datos ordenados" << endl;
-    cout << "2) Busqueda binaria " << endl << endl;
-    cout << "= "; cin >> opcion;
 	
-    system("cls");
-    switch(opcion){
-        case 1:
-            for(int i=0; i<busquedas; i++){
-            	clock_t inicio = clock();
-            	busquedaSecuOrd(arr, tamanio, valor);
-            	clock_t fin = clock();
-            	tiempoBusquedaSecuOrd[i]= double(fin - inicio) / CLOCKS_PER_SEC * 1000;
+	bool encontrado=false;
+	int posicion;
+	clock_t inicio, fin;
+	int REPETICIONES=50000;
+	
+	if(valorPorBusqueda){
+		for(int i=0; i<busquedas; i++){
+	    	valor[i]=rand() % 100; //si antes se eligio por cada busqueda crear un elemento a buscar aleatoriament, se crea
+		}
+	}
+	
+    for(int i=0; i<busquedas; i++){ //cantidad de busquedas
+    	
+    	crearArregloAleatorio(arr, tamanio); 	//crea un arreglo aleatorio por cada busqueda o iteracion de busqueda
+	    ordenarBidireccional(arr, tamanio);		//ordena el arreglo anterior creado aleatoriamente
+    	cout << endl << endl << i+1 << "| "; imprimirArreglo(arr, tamanio); cout << endl << endl;
+	    
+        inicio = clock();
+        for(int j=0; j<REPETICIONES; j++){
+        	if(valorPorBusqueda){
+        		posicion=busquedaSecuOrd(arr, tamanio, valor[i]);
+			} else{
+				posicion=busquedaSecuOrd(arr, tamanio, valor1);
 			}
-			for(int i=0; i<busquedas; i++){
-		    	cout << tiempoBusquedaSecuOrd[i] << endl;
+		}
+		fin = clock();
+		
+		if(posicion>=0){
+			encontrado=true;
+		}
+		if(encontrado){
+			tiempo[i].busquedaSecuOrd= (double(fin - inicio)* 1000 / CLOCKS_PER_SEC)/REPETICIONES;
+		} else {
+			tiempo[i].busquedaSecuOrd=-1;
+		}
+	}
+			
+    for(int i=0; i<busquedas; i++){
+    	
+    	crearArregloAleatorio(arr, tamanio);
+	    ordenarBidireccional(arr, tamanio);
+    	cout << endl << endl << i+1 << "| "; imprimirArreglo(arr, tamanio); cout << endl << endl;
+	    
+        inicio = clock();
+        for(int j=0; j<REPETICIONES; j++){
+        	if(valorPorBusqueda){
+        		posicion=busquedaBinaria(arr, tamanio, valor[i]);
+			} else{
+				posicion=busquedaBinaria(arr, tamanio, valor1);
 			}
-            break;
-        case 2:
-            for(int i=0; i<busquedas; i++){
-            	clock_t inicio = clock();
-            	busquedaBinaria(arr, tamanio, valor);
-            	clock_t fin = clock();
-            	tiempobusquedaBinaria[i]= double(fin - inicio) / CLOCKS_PER_SEC * 1000;
-			}
-			for(int i=0; i<busquedas; i++){
-		    	cout << tiempobusquedaBinaria[i] << " ms." << endl;
-			}
-            break;
-        default:
-            cout << "No valido.";
-            break;
-    }
-    
+		}
+        fin = clock();
+        if(posicion>=0){
+			encontrado=true;
+		}
+		if(encontrado){
+			tiempo[i].busquedaBinaria= (double(fin - inicio)* 1000 / CLOCKS_PER_SEC)/REPETICIONES;
+		} else {
+			tiempo[i].busquedaBinaria=-1;
+		}
+	}
+	
+	cout << "\t\tTIEMPO POR BUSQUEDA POR METODO DE BUSQUEDA ORDENADA" << endl << endl;
+	if(valorPorBusqueda){
+		cout << "\t\t\tElemento a buscar: Por busqueda" << endl;
+	} else {
+		cout << "\t\t\tElemento a buscar: " << valor1 << endl;
+	}
+	cout << "\t\t\tDatos: " << tamanio << endl
+		<< "\t\t\tBusquedas: " << busquedas << endl << endl;
+	cout << "\tBusqueda Secuncial Ordenada\t\tBusqueda Binaria" << endl << endl;
+	
+	if(valorPorBusqueda){
+		for(int i=0; i<busquedas; i++){
+			cout << "(" << valor[i] << ") Busqueda "<< i+1 << " -> \t\t" << tiempo[i].busquedaSecuOrd << " ms.\t\t\t\t" << tiempo[i].busquedaBinaria << " ms." << endl;
+		}
+	} else{
+		for(int i=0; i<busquedas; i++){
+			cout << "Busqueda "<< i+1 << " -> \t\t" << tiempo[i].busquedaSecuOrd << " ms.\t\t\t\t" << tiempo[i].busquedaBinaria << " ms." << endl;
+		}
+	}
+	cout << endl << endl << "\t\tPromedio = " << tiempoPromedioMetodoBusqueda(tiempo, busquedas, true) << "\t\t\t  Promedio = " << tiempoPromedioMetodoBusqueda(tiempo, busquedas, false) << endl;
     return 0;
+}
+
+void imprimirArreglo(int a[], int n){
+	for(int i=0; i<n; i++){
+		cout << a[i] << " ";
+	}
+}
+void crearArregloAleatorio(int a[], int n){
+	
+	for(int i=0; i<n; i++){
+	    a[i] = rand() % 100;
+	}
+}
+
+double tiempoPromedioMetodoBusqueda(Tiempo a[], int n, bool metodoBusqueda) {
+    double suma = 0;
+    for(int i = 0; i < n; i++) {
+        if(metodoBusqueda) {
+            suma += a[i].busquedaSecuOrd;  // Acceso al miembro de cada estructura
+        } else {
+            suma += a[i].busquedaBinaria;  // Acceso al miembro de cada estructura
+        }
+    }
+    return suma / n;
 }
 
 void ordenarBidireccional(int a[], int n){
